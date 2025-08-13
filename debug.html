@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Debug Template</title>
+    <script src="https://sdk.videosdk.live/js-sdk/0.1.6/videosdk.js"></script>
+    <style>
+        body {
+            background: #f00;
+            color: white;
+            font-family: monospace;
+            font-size: 24px;
+            padding: 20px;
+        }
+        .big {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="big">🎾 DEBUG TEMPLATE LOADED</div>
+    <div id="params"></div>
+    <div id="status"></div>
+    <div id="participants"></div>
+    
+    <script>
+        // Parameter anzeigen
+        const urlParams = new URLSearchParams(window.location.search);
+        const meetingId = urlParams.get("meetingId");
+        const token = urlParams.get("token");
+        const participantId = urlParams.get("participantId");
+        
+        document.getElementById('params').innerHTML = `
+            <p>MeetingID: ${meetingId || 'NONE'}</p>
+            <p>Token: ${token ? 'YES' : 'NO'}</p>
+            <p>ParticipantID: ${participantId || 'NONE'}</p>
+        `;
+        
+        if (meetingId && token && participantId) {
+            document.getElementById('status').innerHTML = '<p>Joining meeting...</p>';
+            
+            try {
+                window.VideoSDK.config(token);
+                
+                const meeting = window.VideoSDK.initMeeting({
+                    meetingId: meetingId,
+                    name: "Debug-Bot",
+                    micEnabled: false,
+                    webcamEnabled: false,
+                    participantId: participantId
+                });
+                
+                meeting.on("meeting-joined", () => {
+                    document.getElementById('status').innerHTML = '<p class="big">✅ MEETING JOINED!</p>';
+                });
+                
+                meeting.on("meeting-left", () => {
+                    document.getElementById('status').innerHTML = '<p>Meeting left</p>';
+                });
+                
+                meeting.on("error", (error) => {
+                    document.getElementById('status').innerHTML = `<p>ERROR: ${error.message}</p>`;
+                });
+                
+                meeting.on("participant-joined", (participant) => {
+                    document.getElementById('participants').innerHTML += 
+                        `<p>Participant: ${participant.displayName} (${participant.mode})</p>`;
+                });
+                
+                meeting.join();
+                
+            } catch (error) {
+                document.getElementById('status').innerHTML = `<p>EXCEPTION: ${error.message}</p>`;
+            }
+        } else {
+            document.getElementById('status').innerHTML = '<p>MISSING PARAMETERS!</p>';
+        }
+    </script>
+</body>
+</html>
